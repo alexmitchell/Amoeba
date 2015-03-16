@@ -2,4 +2,5 @@
 /images/resource-icons
 *.pyc
 *.sw*
+*.py~
 
