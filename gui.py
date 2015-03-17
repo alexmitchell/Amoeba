@@ -2,6 +2,8 @@
 import pyglet
 import pyglet.gl as pgl
 
+import shape
+
 # Helper functions
 def load_centered_image(filename):
     img = pyglet.image.load(filename)
@@ -28,7 +30,14 @@ class Gui:
         self.window = window
         self.length_scale = Gui.dot_images['inactive'].width
 
+        midx = self.window.width/2
+        midy = self.window.height/2
+
+        self.shape = shape.Shape(midx, midy, Gui.draw_dot, self.length_scale)
+        self.shape.generate_init_box(10, 5)
+
     def draw(self):
+
         midx = self.window.width/2
         midy = self.window.height/2
 
@@ -37,5 +46,6 @@ class Gui:
         Gui.draw_dot(midx-12, midy-12, 'green')
         Gui.draw_dot(midx-12, midy+12, 'blue')
 
+        self.shape.draw()
 
 
