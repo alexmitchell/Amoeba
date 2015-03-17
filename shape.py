@@ -41,7 +41,7 @@ class Shape:
             position -= dx
             self.create_perimeter_node(position.copy())
 
-        #self.link_nodes()
+        self.link_perimeter_nodes()
 
     def create_perimeter_node(self, position):
         """ Create a new node and add it to self.perimeter_nodes. """
@@ -49,7 +49,7 @@ class Shape:
         node = Node(position, draw_function)
         self.perimeter_nodes.append(node)
 
-    def link_nodes(self):
+    def link_perimeter_nodes(self):
         """ Link the perimeter nodes together. This function assumes
         the nodes are in order in the self.perimeter_nodes list. """
         first = None
@@ -63,6 +63,9 @@ class Shape:
             previous.set_right(node)
 
             previous = node
+
+        first.set_left(previous)
+        previous.set_right(first)
             
     def draw(self):
         for node in self.perimeter_nodes:

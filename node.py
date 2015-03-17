@@ -16,7 +16,12 @@ class Node:
         self.left_node = None
         self.right_node = None
 
+    def set_left(self, node):
+        self.left_node = node
+
+    def set_right(self, node):
+        self.right_node = node
+
     def draw(self):
-        x, y = self.position.tuple
-        self.draw_dot_function(x, y, self.state)
+        self.draw_dot_function(self)
 
