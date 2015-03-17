@@ -48,7 +48,6 @@ class Gui:
         # Draw the dot
         Gui.dot_images[state].blit(x,y,0)
 
-
     def draw_dot(x, y, state):
         Gui.dot_images[state].blit(x,y,0)
 
@@ -87,10 +86,12 @@ class Gui:
     def handle_mouse_press(self, x, y, button, modifiers):
         if button == mouse.LEFT:
             self.click_location = Vector(x, y)
+            self.shape.activate_closest_nodes(self.click_location)
 
     def handle_mouse_release(self, x, y, button, modifiers):
         if button == mouse.LEFT:
             self.click_location = None
+            self.shape.deactivate_nodes()
 
     def handle_mouse_drag(self, x, y, dx, dy, button, modifiers):
         if button == mouse.LEFT:

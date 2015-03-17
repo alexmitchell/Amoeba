@@ -25,3 +25,8 @@ class Node:
     def draw(self):
         self.draw_dot_function(self)
 
+    def activate(self):
+        self.state='active'
+
+    def deactivate(self):
+        self.state='inactive'
