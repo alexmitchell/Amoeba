@@ -5,20 +5,25 @@ class Shape:
     def __init__(self, center_x, center_y, draw_dot_function, length_scale):
         self.draw_dot_function = draw_dot_function
         self.length_scale = length_scale
+
+        self.max_link_length = 4.5 * length_scale
+        self.min_link_length = 1.5 * length_scale
+        self.std_link_length = (self.max_link_length + self.min_link_length)/2
         self.init_center = Vector(center_x, center_y)
 
         self.perimeter_nodes = []
         self.active_nodes = []
         self.number_to_activate = 4
 
+    # Setup
     def generate_init_box(self, nx, ny):
         """ Create a nx by ny box of dots as the initial shape. The
         distance between nodes is set by self.length_scale. The nodes
         will be added to self.perimeter_nodes in sequence. (ie. 
         perimeter_node[0] is left of perimeter_node[1] and so on...) """
         center = self.init_center
-        dx = 3 * Vector(self.length_scale, 0)
-        dy = 3 * Vector(0, self.length_scale)
+        dx = Vector(self.std_link_length, 0)
+        dy = Vector(0, self.std_link_length)
 
         # Calculate the bottom left corner of the box
         position = center - (nx-1) / 2 * dx - (ny-1) / 2 * dy
@@ -48,8 +53,12 @@ class Shape:
     def create_perimeter_node(self, position):
         """ Create a new node and add it to self.perimeter_nodes. """
         draw_function = self.draw_dot_function
+        x,y = position.tuple
+        position.x = round(x)
+        position.y = round(y)
         node = Node(position, draw_function)
         self.perimeter_nodes.append(node)
+        return node
 
     def link_perimeter_nodes(self):
         """ Link the perimeter nodes together. This function assumes
@@ -69,10 +78,9 @@ class Shape:
         first.set_left(previous)
         previous.set_right(first)
             
-    def draw(self):
-        for node in self.perimeter_nodes:
-            node.draw()
 
+
+    # Node activation methods
     def activate_closest_nodes(self, click):
         n_activate = self.number_to_activate
         candidate_magnitudes = {}
@@ -176,8 +184,67 @@ class Shape:
             if left and right:
                 self.active_nodes.append(node)
 
-
     def deactivate_nodes(self):
         for node in self.active_nodes:
             node.deactivate()
         self.active_nodes = []
+
+
+    # Gui methods
+    def draw(self):
+        for node in self.perimeter_nodes:
+            node.draw()
+    
+    def move_active_nodes(self, delta):
+        # Move the active nodes
+        for node in self.active_nodes:
+            node.move(delta)
+
+        # Check the link lengths, split or destroy as necessary
+        for node in self.active_nodes:
+            for adjacent in node.left_node, node.right_node:
+                link = node.position - adjacent.position
+                length = link.magnitude
+
+                if length > self.max_link_length:
+                    # Split the link
+                    self.split_link(node, adjacent)
+                elif length < self.min_link_length:
+                    # Remove adjacent
+                    self.remove_node(adjacent)
+
+    def split_link(self, node_a, node_b):
+        link = node_a.position - node_b.position
+        position = link / 2 + node_b.position
+
+        node = self.create_perimeter_node(position)
+        
+        if node_a.left_node is node_b:
+            node.right_node = node_a
+            node.left_node = node_b
+
+            node_a.left_node = node
+            node_b.right_node = node
+
+        elif node_a.right_node is node_b:
+            node.right_node = node_b
+            node.left_node  = node_a
+
+            node_a.right_node = node
+            node_b.left_node  = node
+
+        else:
+            print("New node did not link properly.")
+            raise
+
+    def remove_node(self, node):
+        left = node.left_node
+        right = node.right_node
+
+        if left.left_node is right:
+            print("Cannot have fewer than 3 nodes (less than a triangle).")
+        else:
+            left.right_node = right
+            right.left_node = left
+            self.perimeter_nodes.remove(node)
+            

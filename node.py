@@ -30,3 +30,6 @@ class Node:
 
     def deactivate(self):
         self.state='inactive'
+
+    def move(self, delta):
+        self.position += delta

@@ -95,5 +95,8 @@ class Gui:
 
     def handle_mouse_drag(self, x, y, dx, dy, button, modifiers):
         if button == mouse.LEFT:
-            self.click_location += Vector(dx, dy)
+            delta =  Vector(dx, dy)
+            self.click_location += delta
+            self.shape.move_active_nodes(delta)
+
 
