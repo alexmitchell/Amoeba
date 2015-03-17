@@ -1,5 +1,5 @@
 /env
-/images/resource-icons
+*.notes.txt
 *.pyc
 *.sw*
 *.py~

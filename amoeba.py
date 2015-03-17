@@ -1,14 +1,19 @@
 #! /usr/bin/env python3
 import pyglet
+import pyglet.gl as pgl
+
+import gui as GUI
 
 
 window = pyglet.window.Window()
-label = pyglet.text.Label("Hello World!", x=window.width//2, y=window.height//2)
+pgl.glClearColor(1,1,1,1)
+
+gui = GUI.Gui(window)
 
 @window.event
 def on_draw():
     window.clear()
-    label.draw()
+    gui.draw()
+
 
 pyglet.app.run()
-
