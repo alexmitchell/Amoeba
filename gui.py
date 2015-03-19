@@ -2,9 +2,11 @@
 import pyglet
 from pyglet.window import mouse
 import pyglet.gl as pgl
+import math
 
 from vecrec import Vector
 import shape
+from kotm_queue import KOTMQueue
 
 # Helper functions
 def load_centered_image(filename):
@@ -12,7 +14,6 @@ def load_centered_image(filename):
     img.anchor_x = img.width // 2
     img.anchor_y = img.height // 2
     return img
-
 
 class Gui:
     dot_images = {
@@ -62,7 +63,11 @@ class Gui:
 
         self.shape = shape.Shape(midx, midy, Gui.draw_node, self.length_scale)
         self.shape.generate_init_box(10, 5)
+
         self.click_location = None
+        tracking_count = 10
+        self.mouse_delta_tracker = KOTMQueue(tracking_count)
+        self.mouse_direction = KOTMQueue(tracking_count)
 
     def draw(self):
         # draw some test dots
@@ -92,11 +97,42 @@ class Gui:
         if button == mouse.LEFT:
             self.click_location = None
             self.shape.deactivate_nodes()
+            self.mouse_delta_tracker.clear()
+            self.mouse_direction.clear()
 
     def handle_mouse_drag(self, x, y, dx, dy, button, modifiers):
+        # Ignore the drag event if the mouse didn't actually move...
+        if 0 == dx + dy:
+            return
+
+        # With a left click drag, move active nodes.
         if button == mouse.LEFT:
             delta =  Vector(dx, dy)
-            self.click_location += delta
-            self.shape.move_active_nodes(delta)
 
+            self.click_location += delta
+            self.track_mouse(delta.copy())
+
+            current_direction = self.mouse_direction.peek_front()
+            old_direction = self.mouse_direction.peek_back()
+
+            self.shape.move_active_nodes(
+                    self.click_location, delta,
+                    current_direction, old_direction)
+
+    def track_mouse(self, delta):
+        """ Store the most recent mouse motion values and keep track
+        of longer term trends in mouse motion. """
+
+        self.mouse_delta_tracker.push(delta)
+        
+        if not self.mouse_delta_tracker.is_full():
+            # Need more data before assessing long term trends
+            return
+
+        deltas = self.mouse_delta_tracker.peek_all()
+        direction = sum(deltas)
+        if direction:
+            # Only track the long term direction if it is not a null 
+            # vector.
+            self.mouse_direction.push(direction)
 

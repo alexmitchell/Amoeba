@@ -1,3 +1,6 @@
+import math
+from math import pi
+
 from vecrec import Vector
 from node import Node
 
@@ -195,22 +198,83 @@ class Shape:
         for node in self.perimeter_nodes:
             node.draw()
     
-    def move_active_nodes(self, delta):
-        # Move the active nodes
+    def move_active_nodes(self, mouse_position, delta, direction_now, direction_old):
+        """ If the player gently curves the mouse path, the nodes
+        will rotate. If the player sharply changes mouse direction,
+        the nodes won't rotate. """
+
+        mouse_turn = self.calculate_mouse_turn(direction_now, direction_old)
+        mouse_turn /= 10
+        min_turn = 0 * pi / 180
+        max_turn = 10 * pi / 180
+        if math.fabs(mouse_turn) > max_turn:
+            # Turn too sharp. Move the active nodes the same as the 
+            # mouse.  Nodes do not rotate.
+            #print("Sharp turn! ", int(mouse_turn * 180 / pi))
+            self.translate_nodes(delta)
+
+        elif math.fabs(mouse_turn) <= min_turn:
+            # Turn too gentle. Move the active nodes the same as the 
+            # mouse.  Nodes do not rotate.
+            #if mouse_turn is not 0:
+            #    print("No turn: ", int(mouse_turn * 180 / pi))
+            self.translate_nodes(delta)
+        else:
+            # Gentle turn. Rotate nodes relative to the mouse turning.
+            #print ("Gentle turn:", int(mouse_turn * 180 / pi))
+            self.move_and_rotate_nodes(mouse_position, delta, mouse_turn)
+
+        self.fix_link_lengths()
+
+    def translate_nodes(self, delta):
         for node in self.active_nodes:
             node.move(delta)
 
-        # Check the link lengths, split or destroy as necessary
+    def calculate_mouse_turn(self, new, old):
+        """ Calculate the radians that the mouse has turned. Values will be
+        between -pi and pi. Positive angles indicate counter-clockwise 
+        rotation. """
+        if new is None or old is None or not new or not old:
+            return 0
+        else:
+            angle = old.get_radians_to(new)
+            # Make angle the shorter of the two rotation directions.
+            if angle > pi:
+                angle -= 2 * pi
+            elif angle < -pi:
+                angle += 2 * pi
+            return angle
+
+    def move_and_rotate_nodes(self, mouse_position, delta, mouse_turn):
+        # Move the active nodes
+        for node in self.active_nodes:
+            # Move the node normally.
+            node.move(delta)
+
+            # Rotate the node around the mouse click. Note, all the 
+            # active nodes are rotating around the mouse click; this 
+            # should preserve the original shape of the active nodes.
+            radius = node.position - mouse_position
+            angle = mouse_turn
+
+            #print ("Gentle turn:", int(angle * 180 / pi), "delta: ",delta)
+            rotation_offset = radius.get_rotated(angle) - radius
+            node.move(rotation_offset)
+
+    def fix_link_lengths(self):
+        """ Check the link lengths. Split the link if it is too
+        long or destroy a node if a link is too short. """
+
         for node in self.active_nodes:
             for adjacent in node.left_node, node.right_node:
                 link = node.position - adjacent.position
                 length = link.magnitude
 
                 if length > self.max_link_length:
-                    # Split the link
+                    # Nodes too far, split the link
                     self.split_link(node, adjacent)
                 elif length < self.min_link_length:
-                    # Remove adjacent
+                    # Nodes too close, remove adjacent
                     self.remove_node(adjacent)
 
     def split_link(self, node_a, node_b):
@@ -247,4 +311,5 @@ class Shape:
             left.right_node = right
             right.left_node = left
             self.perimeter_nodes.remove(node)
-            
+
+
