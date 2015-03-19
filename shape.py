@@ -9,6 +9,8 @@ class Shape:
         self.draw_dot_function = draw_dot_function
         self.length_scale = length_scale
 
+        self.skip_rotation = False
+
         self.max_link_length = 4.5 * length_scale
         self.min_link_length = 1.5 * length_scale
         self.std_link_length = (self.max_link_length + self.min_link_length)/2
@@ -202,6 +204,11 @@ class Shape:
         """ If the player gently curves the mouse path, the nodes
         will rotate. If the player sharply changes mouse direction,
         the nodes won't rotate. """
+
+        if self.skip_rotation:
+            self.translate_nodes(delta)
+            self.fix_link_lengths()
+            return
 
         mouse_turn = self.calculate_mouse_turn(direction_now, direction_old)
         mouse_turn /= 10
